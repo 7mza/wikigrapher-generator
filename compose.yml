@@ -1,0 +1,71 @@
+services:
+  generator:
+    build: .
+    mem_limit: 28g
+    # cpus: 10 #threads
+    restart: no
+    environment:
+      - DUMP_DATE=$DUMP_DATE
+      - DUMP_LANG=$DUMP_LANG
+    volumes:
+      - $PWD/dump/:/app/dump/
+      - $PWD/output/:/app/output/
+    profiles:
+      - generator
+    user: ${UID}:${GID}
+
+  neo4j:
+    image: neo4j:2025-community
+    mem_limit: 8g
+    # cpus: 10 #threads
+    restart: unless-stopped
+    ports:
+      - 7474:7474
+      - 7687:7687
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc", "apoc-extended"]
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_client_allow__telemetry=false
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_dbms_usage__report_enabled=false
+      - NEO4J_server_bolt_telemetry_enabled=false
+      - NEO4J_server_directories_import=import
+      - NEO4J_server_jvm_additional=-XX:+ExitOnOutOfMemoryError -XX:+UseCompressedOops -XX:+UseStringDeduplication --add-modules=jdk.incubator.vector
+      # # for 32g
+      # - NEO4J_server_memory_heap_initial__size=11900m
+      # - NEO4J_server_memory_heap_max__size=11900m
+      # - NEO4J_server_memory_pagecache_size=12100m
+      # # for 16g
+      # - NEO4J_server_memory_heap_initial__size=5g
+      # - NEO4J_server_memory_heap_max__size=5g
+      # - NEO4J_server_memory_pagecache_size=7g
+      # for 8g
+      - NEO4J_server_memory_heap_initial__size=3600m
+      - NEO4J_server_memory_heap_max__size=3600m
+      - NEO4J_server_memory_pagecache_size=2g
+    # command: 'bash -c "echo ''Not starting database automatically'' && tail -f /dev/null"'
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          'neo4j-admin server status | grep -q "Neo4j is running" || exit 1',
+        ]
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - $PWD/output/:/import/
+      - neo4j_data:/data/
+    profiles:
+      - neo4j
+
+volumes:
+  # https://neo4j:com/docs/operations-manual/current/docker/mounting-volumes
+  neo4j_data:
+    name: wikigrapher_neo4j_data
