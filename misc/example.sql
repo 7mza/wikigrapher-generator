@@ -35,7 +35,9 @@ INSERT INTO `page` VALUES
 (24,14,'hidden_cat2',0,0,0.0,'0','0',0,0,'',NULL),
 (25,0,'stormcrow',1,0,0.0,'0','0',0,0,'',NULL),
 (26,0,'bombadil',0,0,0.0,'0','0',0,0,'',NULL),
-(27,0,'the bright lord',1,0,0.0,'0','0',0,0,'',NULL);
+(27,0,'the bright lord',1,0,0.0,'0','0',0,0,'',NULL),
+(28,0,'test_node',0,0,0.0,'0','0',0,0,'',NULL),
+(29,0,'test_redirect',1,0,0.0,'0','0',0,0,'',NULL);
 --PAGES##
 
 --##LINKS
@@ -81,7 +83,11 @@ INSERT INTO `pagelinks` VALUES
 /* wisdom:16:the bright lord */
 (15,0,16),
 /* good:17:the bright lord */
-(12,0,17);
+(12,0,17),
+/* wizard:18:test_redirect */
+(11,0,18),
+/* test_node:7:celebrimbor */
+(28,0,7);
 --LINKS##
 
 --##LINKTARGETS
@@ -106,7 +112,8 @@ INSERT INTO `linktarget` VALUES
 (14,0,'sauron'),
 (15,0,'the grey wizard'),
 (16,0,'the bright lord'),
-(17,0,'the bright lord');
+(17,0,'the bright lord'),
+(18,0,'test_redirect');
 --LINKTARGETS##
 
 --##REDIRECTS
@@ -141,7 +148,8 @@ INSERT INTO `redirect` VALUES
 (19,0,'redirectB','',''),
 /* 25:4, redirect to a redirect */
 (25,0,'mithrandir','',''),
-(27,0,'celebrimbor','','');
+(27,0,'celebrimbor','',''),
+(29,0,'test_node','','');
 --REDIRECTS##
 
 --##PAGEPROPS
