@@ -1,8 +1,6 @@
 # neo4j
 
-some queries to start testing
-
-### top/bottom N categories
+## top/bottom N categories
 
 ```sql
 MATCH (category:category)<-[:belong_to]-()
@@ -12,7 +10,7 @@ ORDER BY categoryCount DESC // or ASC for bottom
 LIMIT 3 // carefull, will hang your host
 ```
 
-### shortest path between two nodes
+## shortest path between two nodes
 
 ```sql
 MATCH (source:page|redirect {title: "Gandalf"})
@@ -21,7 +19,7 @@ MATCH path = SHORTESTPATH((source)-[:link_to|redirect_to*1..100]->(target))
 RETURN path
 ```
 
-### all shortest paths between two nodes
+## all shortest paths between two nodes
 
 ```sql
 MATCH (source:page|redirect {title: "Gandalf"})
@@ -31,7 +29,7 @@ MATCH paths = ALLSHORTESTPATHS((source)-[:link_to|redirect_to*1..100]->(target))
 RETURN paths
 ```
 
-### all shortest paths between two nodes + consider redirects as target
+## all shortest paths between two nodes + consider redirects as target
 
 ```sql
 MATCH (source:page|redirect {title: "Gandalf"})
@@ -54,7 +52,7 @@ WITH
 RETURN finalPath;
 ```
 
-### all shortest paths between two nodes + categories of each node
+## all shortest paths between two nodes + categories of each node
 
 ```sql
 MATCH (source:page|redirect {title: "Gandalf"})
@@ -66,7 +64,7 @@ OPTIONAL MATCH belongs = (nodes)-[:belong_to]->(categories:category)
 RETURN paths, nodes, belongs, categories
 ```
 
-### all categories of all shortest paths between two nodes
+## all categories of all shortest paths between two nodes
 
 ```sql
 MATCH (source:page|redirect {title: "Gandalf"})
@@ -78,7 +76,7 @@ OPTIONAL MATCH belongs = (nodes)-[:belong_to]->(categories:category)
 RETURN COLLECT(DISTINCT categories)
 ```
 
-### orphan pages (long running procedure)
+## orphan pages (long running procedure)
 
 ```sql
 CALL
@@ -99,7 +97,7 @@ RETURN batches, total
 MATCH (orphan:orphan) RETURN orphan
 ```
 
-### batch delete
+## batch delete
 
 ```sql
 CALL
@@ -112,7 +110,7 @@ CALL
 RETURN batches, total
 ```
 
-### all nodes belonging to a category
+## all nodes belonging to a category
 
 ```sql
 MATCH (target:category {title: "The_Lord_of_the_Rings_characters"})

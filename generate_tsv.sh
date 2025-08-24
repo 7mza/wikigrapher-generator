@@ -120,6 +120,9 @@ function download_file() {
 	fi
 }
 
+# always get sums files from server
+rm -f "$SHA1SUM_FILENAME" "$MD5SUM_FILENAME"
+
 download_file "sha1sums" "$SHA1SUM_FILENAME"
 download_file "md5sums" "$MD5SUM_FILENAME"
 download_file "redirects" "$REDIRECTS_DUMP_FILENAME"
@@ -131,10 +134,11 @@ download_file "categorylinks" "$CATEGORYLINKS_DUMP_FILENAME"
 download_file "linktargets" "$LINKTARGETS_DUMP_FILENAME"
 #download_file "templatelinks" "$TEMPLATELINKS_DUMP_FILENAME"
 
-set +euo pipefail
-for file in *.sql.gz; do pigz -dc "$file" | head -n100 | awk 'BEGIN{RS="INSERT"} NR==1'; done >DDL.sql
-echo "[INFO] DDL generated in $DUMP_DIR/DDL.sql"
-set -euo pipefail
+(
+	set +e +o pipefail
+	for file in *.sql.gz; do pigz -dc "$file" | head -n100 | awk 'BEGIN{RS="INSERT"} NR==1'; done >DDL.sql
+	echo "[INFO] DDL generated in $DUMP_DIR/DDL.sql"
+)
 
 REDIRECTS_TRIM_FILENAME="redirects_trim.tsv.gz"
 
@@ -214,34 +218,20 @@ if [[ ! -f "$PAGEPROPS_TRIM_FILENAME" ]]; then
 else
 	echo "[WARN] PAGEPROPS: already extracted hiddencats"
 fi
-
-CATEGORIES_SANITIZED_FILENAME="categories_sanitized.tsv.gz"
-
-if [[ ! -f "$CATEGORIES_SANITIZED_FILENAME" ]]; then
-	echo "[INFO] CATEGORIES: sanitizing file"
-	rm -f "$CATEGORIES_SANITIZED_FILENAME".tmp
-	pigz -dc "$CATEGORIES_DUMP_FILENAME" |
-		split -l 50000 - chunk_ # lower if oom
-	for file in chunk_*; do
-		iconv -t UTF-8//TRANSLIT -c "$file" |
-			pigz --fast >>"$CATEGORIES_SANITIZED_FILENAME".tmp
-		rm "$file"
-	done
-	mv "$CATEGORIES_SANITIZED_FILENAME".tmp "$CATEGORIES_SANITIZED_FILENAME"
-else
-	echo "[WARN] CATEGORIES: already sanitized file"
-fi
-
 CATEGORIES_TRIM_FILENAME="categories_trim.tsv.gz"
 
 if [[ ! -f "$CATEGORIES_TRIM_FILENAME" ]]; then
 	echo "[INFO] CATEGORIES: trimming file"
-	pigz -dc "$CATEGORIES_SANITIZED_FILENAME" |
-		sed -n "s/^INSERT INTO \`category\` VALUES (//p" |
-		sed -e "s/),(/\\n/g" |
-		sed -e "s/,'/\\t/" |
-		sed -e "s/',.*$//" | # FIXME: 'zebi',zebi'
-		pigz --fast >"$CATEGORIES_TRIM_FILENAME".tmp
+	(
+		set +e +o pipefail
+		pigz -dc "$CATEGORIES_DUMP_FILENAME" |
+			iconv -t UTF-8 -c |
+			sed -n "s/^INSERT INTO \`category\` VALUES (//p" |
+			sed -e "s/),(/\\n/g" |
+			sed -e "s/,'/\\t/" |
+			sed -e "s/',.*$//" | # FIXME: 'zebi',zebi'
+			pigz --fast >"$CATEGORIES_TRIM_FILENAME".tmp
+	)
 	mv "$CATEGORIES_TRIM_FILENAME".tmp "$CATEGORIES_TRIM_FILENAME"
 else
 	echo "[WARN] CATEGORIES: already trimmed file"
@@ -253,12 +243,15 @@ if [[ ! -f "$CATEGORYLINKS_SANITIZED_FILENAME" ]]; then
 	echo "[INFO] CATEGORYLINKS: sanitizing file"
 	rm -f "$CATEGORYLINKS_SANITIZED_FILENAME".tmp
 	pigz -dc "$CATEGORYLINKS_DUMP_FILENAME" |
-		split -l 50000 - chunk_ # lower if oom
-	for file in chunk_*; do
-		iconv -t UTF-8//TRANSLIT -c "$file" |
-			pigz --fast >>"$CATEGORYLINKS_SANITIZED_FILENAME".tmp
-		rm "$file"
-	done
+		split -l 50000 - chunk_
+	(
+		set +e +o pipefail
+		for file in chunk_*; do
+			iconv -t UTF-8 -c "$file" |
+				pigz --fast >>"$CATEGORYLINKS_SANITIZED_FILENAME".tmp
+			rm "$file"
+		done
+	)
 	mv "$CATEGORYLINKS_SANITIZED_FILENAME".tmp "$CATEGORYLINKS_SANITIZED_FILENAME"
 else
 	echo "[WARN] CATEGORYLINKS: already sanitized file"
@@ -573,6 +566,6 @@ if [[ -f "$PAGES_FINAL_FILENAME" ]] && [[ -f "$PAGELINKS_FINAL_FILENAME" ]] && [
 	ls -l "$OUTPUT_DIR"
 fi
 
-echo "[INFO] all done: $(date +"%a %b %d %T %Y")"
+echo "[INFO] graph generated successfully: $(date +"%a %b %d %T %Y")"
 
 exit 0

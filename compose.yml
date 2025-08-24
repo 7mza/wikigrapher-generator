@@ -12,7 +12,6 @@ services:
       - $PWD/output/:/app/output/
     profiles:
       - generator
-    user: ${UID}:${GID}
 
   neo4j:
     image: neo4j:2025-community
