@@ -27,7 +27,7 @@ while (("$#")); do
 	--lang)
 		LOWER_LANG=$(echo "$2" | tr '[:upper:]' '[:lower:]')
 		case "$LOWER_LANG" in
-		en | fr)
+		en | fr | ar)
 			DUMP_LANG="$LOWER_LANG"
 			shift 2
 			;;

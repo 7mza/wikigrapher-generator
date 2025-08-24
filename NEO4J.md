@@ -76,15 +76,24 @@ OPTIONAL MATCH belongs = (nodes)-[:belong_to]->(categories:category)
 RETURN COLLECT(DISTINCT categories)
 ```
 
-## orphan pages (long running procedure)
+## orphan nodes (long running procedure)
 
 ```sql
 CALL
   apoc.periodic.iterate(
-    "MATCH (node:page) WHERE NOT EXISTS((node)-[:link_to]->()) AND NOT EXISTS((node)<-[:link_to|redirect_to]-()) RETURN node",
-    "CREATE (orphan:orphan {id: node.pageId, title: node.title, type:labels(node)[0], createdAt: timestamp()}) WITH orphan, node
-   CALL apoc.log.info('orphan\tid:%s\ttitle:%s\ttype:%s', [orphan.id, orphan.title, orphan.type])
-   RETURN orphan",
+    "MATCH (node:page)
+    WHERE NOT EXISTS((node)-[:link_to]->())
+    AND NOT EXISTS((node)<-[:link_to|redirect_to]-())
+    RETURN node
+    UNION
+    MATCH (node:redirect)
+    WHERE NOT EXISTS((node)-[:redirect_to]->())
+    AND NOT EXISTS((node)<-[:link_to|redirect_to]-())
+    RETURN node",
+    "CREATE (orphan:orphan {id: node.pageId, title: node.title, type: labels(node)[0], createdAt: timestamp()})
+    WITH orphan, node
+    CALL apoc.log.info('orphan\\tid:%s\\ttitle:%s\\ttype:%s', [orphan.id, orphan.title, orphan.type])
+    RETURN orphan",
     {batchSize: 10000, parallel: true}
   )
   YIELD batches, total

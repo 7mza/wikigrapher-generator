@@ -61,8 +61,10 @@ pip3 install --upgrade pip -r requirements.txt
 
 **--lang XX** represents desired language of dump
 
+- **EN/FR/AR are tested**
 - if not provided, will default to EN
-- EN is tested, other left to right languages should work (untested)
+
+to test an other language, enable it in line `en | fr | ar)` in [generate_tsv.sh](./generate_tsv.sh)
 
 **dump download depends on wikimedia servers rate limit and tsv generation takes around 2h on a 6c/32g/nvme**
 
@@ -130,9 +132,17 @@ necessary for perf
 
 ```sql
 CREATE TEXT INDEX index_page_title IF NOT EXISTS FOR (n:page) on (n.title);
+CREATE TEXT INDEX index_page_id IF NOT EXISTS FOR (n:page) on (n.pageId);
+
 CREATE TEXT INDEX index_redirect_title IF NOT EXISTS FOR (n:redirect) on (n.title);
+CREATE TEXT INDEX index_redirect_id IF NOT EXISTS FOR (n:redirect) on (n.pageId);
+
 CREATE TEXT INDEX index_category_title IF NOT EXISTS FOR (n:category) on (n.title);
+CREATE TEXT INDEX index_category_id IF NOT EXISTS FOR (n:category) on (n.categoryId);
+
 CREATE TEXT INDEX index_meta_property IF NOT EXISTS FOR (n:meta) on (n.property);
+CREATE TEXT INDEX index_meta_value IF NOT EXISTS FOR (n:meta) on (n.value);
+CREATE TEXT INDEX index_meta_id IF NOT EXISTS FOR (n:meta) on (n.metaId);
 ```
 
 ```sql
