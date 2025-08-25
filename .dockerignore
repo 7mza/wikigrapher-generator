@@ -4,3 +4,4 @@ misc/**
 output/**
 venv/**
 **/__pycache__/**
+.git/**
