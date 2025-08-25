@@ -9,6 +9,7 @@ INSERT INTO `page` VALUES
 (5,0,'the grey wizard',1,0,0.0,'0','0',0,0,'',NULL),
 (6,0,'sauron',0,0,0.0,'0','0',0,0,'',NULL),
 (7,0,'the dark lord',1,0,0.0,'0','0',0,0,'',NULL),
+/* orphan redirect */
 (8,0,'the necromancer',1,0,0.0,'0','0',0,0,'',NULL),
 (9,0,'celebrimbor',0,0,0.0,'0','0',0,0,'',NULL),
 (10,0,'morgoth',0,0,0.0,'0','0',0,0,'',NULL),
@@ -20,7 +21,7 @@ INSERT INTO `page` VALUES
 (15,0,'wisdom',0,0,0.0,'0','0',0,0,'',NULL),
 /* repeat id, should not be kept */
 (15,0,'wisdom',0,0,0.0,'0','0',0,0,'',NULL),
-/* redirect page with no redirects, should not be kept */
+/* orphan redirect */
 (16,0,'nothing',1,0,0.0,'0','0',0,0,'',NULL),
 (17,0,'redirectA',1,0,0.0,'0','0',0,0,'',NULL),
 (18,0,'redirectB',1,0,0.0,'0','0',0,0,'',NULL),
@@ -37,7 +38,9 @@ INSERT INTO `page` VALUES
 (26,0,'bombadil',0,0,0.0,'0','0',0,0,'',NULL),
 (27,0,'the bright lord',1,0,0.0,'0','0',0,0,'',NULL),
 (28,0,'test_node',0,0,0.0,'0','0',0,0,'',NULL),
-(29,0,'test_redirect',1,0,0.0,'0','0',0,0,'',NULL);
+(29,0,'test_redirect',1,0,0.0,'0','0',0,0,'',NULL),
+/* orphan page */
+(30,0,'orphan1',0,0,0.0,'0','0',0,0,'',NULL);
 --PAGES##
 
 --##LINKS

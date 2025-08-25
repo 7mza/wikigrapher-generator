@@ -42,6 +42,22 @@ def process_pages(
     return (pages_by_ids, pages_by_titles)
 
 
+@typechecked
+def output_pages_to_stdout(
+    pages: dict[str, tuple[str, bool]],
+) -> None:
+    for _id, (title, is_redirect) in tqdm(pages.items()):
+        print(
+            "\t".join(
+                [
+                    _id,
+                    title,
+                    "redirect" if is_redirect else "page",
+                ]
+            )
+        )
+
+
 parser = argparse.ArgumentParser(description="process pages file")
 
 parser.add_argument(
@@ -78,3 +94,6 @@ logger.info("generating pages_by_titles pickle")
 path, size = serialize(pages_by_titles, PAGES_BY_TITLES_PKL_FILENAME)
 logger.info("%s, %s", path, size)
 logger.info("pages_by_titles:\n%s", print_dict_header(pages_by_titles))
+
+logger.info("pages > stdout")
+output_pages_to_stdout(pages_by_ids)

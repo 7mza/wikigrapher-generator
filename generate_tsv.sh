@@ -27,7 +27,7 @@ while (("$#")); do
 	--lang)
 		LOWER_LANG=$(echo "$2" | tr '[:upper:]' '[:lower:]')
 		case "$LOWER_LANG" in
-		en | fr | ar)
+		en | ar | fr)
 			DUMP_LANG="$LOWER_LANG"
 			shift 2
 			;;
@@ -86,6 +86,7 @@ echo "[INFO] output directory: $DUMP_DIR"
 
 function download_file() {
 	if [[ ! -f "$2" ]]; then
+		# dont' use aria2 for small sum file
 		if [[ "$1" != sha1sums ]] && [[ "$1" != md5sums ]] && command -v aria2c >/dev/null; then
 			echo "[INFO] downloading $1 file via aria2c"
 			if ! aria2c --console-log-level=error -c -x 3 -s 32 -k 10M \
@@ -120,8 +121,10 @@ function download_file() {
 	fi
 }
 
-# always get sums files from server
-rm -f "$SHA1SUM_FILENAME" "$MD5SUM_FILENAME"
+if [[ $DOWNLOAD_DATE != "11111111" ]]; then
+	# always get sums files from server
+	rm -f "$SHA1SUM_FILENAME" "$MD5SUM_FILENAME"
+fi
 
 download_file "sha1sums" "$SHA1SUM_FILENAME"
 download_file "md5sums" "$MD5SUM_FILENAME"
@@ -336,17 +339,20 @@ fi
 
 PAGES_BY_IDS_PKL_FILENAME="PAGES_BY_IDS.pkl.gz"
 PAGES_BY_TITLES_PKL_FILENAME="PAGES_BY_TITLES.pkl.gz"
+PAGES_FILENAME="pages.tsv.gz"
 
-if [[ ! -f "$PAGES_BY_IDS_PKL_FILENAME" ]] || [[ ! -f "$PAGES_BY_TITLES_PKL_FILENAME" ]]; then
+if [[ ! -f "$PAGES_BY_IDS_PKL_FILENAME" ]] || [[ ! -f "$PAGES_BY_TITLES_PKL_FILENAME" ]] || [[ ! -f "$PAGES_FILENAME" ]]; then
 	echo "[INFO] PAGES: generating pages_by_ids and pages_by_titles pickles"
 	total_lines=$(pigz -dc "$PAGES_TRIM_FILENAME" | sed -n '$=')
 	python3 "$ROOT_DIR/scripts/process_pages.py" \
 		--PAGES_TRIM_FILENAME "$PAGES_TRIM_FILENAME" \
 		--PAGES_BY_IDS_PKL_FILENAME "$PAGES_BY_IDS_PKL_FILENAME" \
 		--PAGES_BY_TITLES_PKL_FILENAME "$PAGES_BY_TITLES_PKL_FILENAME" \
-		--total_lines "$total_lines"
+		--total_lines "$total_lines" |
+		pigz --fast >"$PAGES_FILENAME".tmp
 	mv "$PAGES_BY_IDS_PKL_FILENAME".tmp "$PAGES_BY_IDS_PKL_FILENAME"
 	mv "$PAGES_BY_TITLES_PKL_FILENAME".tmp "$PAGES_BY_TITLES_PKL_FILENAME"
+	mv "$PAGES_FILENAME".tmp "$PAGES_FILENAME"
 else
 	echo "[WARN] PAGES: already generated pickles"
 fi
@@ -382,22 +388,6 @@ else
 	echo "[WARN] REDIRECTS: already sorted final tsv"
 fi
 
-PURGED_PAGES_FILENAME="PURGED_PAGES.tsv.gz"
-PURGED_PAGES_PKL_FILENAME="PURGED_PAGES.pkl.gz"
-
-if [[ ! -f "$PURGED_PAGES_PKL_FILENAME" ]]; then
-	echo "[INFO] PAGES: purging orphan redirects & generating pickle"
-	python3 "$ROOT_DIR/scripts/purge_pages.py" \
-		--PAGES_BY_IDS_PKL_FILENAME "$PAGES_BY_IDS_PKL_FILENAME" \
-		--REDIRECTS_PKL_FILENAME "$REDIRECTS_PKL_FILENAME" \
-		--PURGED_PAGES_PKL_FILENAME "$PURGED_PAGES_PKL_FILENAME" |
-		pigz --fast >"$PURGED_PAGES_FILENAME".tmp
-	mv "$PURGED_PAGES_FILENAME".tmp "$PURGED_PAGES_FILENAME"
-	mv "$PURGED_PAGES_PKL_FILENAME".tmp "$PURGED_PAGES_PKL_FILENAME"
-else
-	echo "[WARN] PAGES: already purged orphan redirects & generated pickle"
-fi
-
 LINKTARGETS_PKL_FILENAME="LINKTARGETS.pkl.gz"
 
 if [[ ! -f "$LINKTARGETS_PKL_FILENAME" ]]; then
@@ -405,7 +395,7 @@ if [[ ! -f "$LINKTARGETS_PKL_FILENAME" ]]; then
 	total_lines=$(pigz -dc "$LINKTARGETS_TRIM_FILENAME" | sed -n '$=')
 	python3 "$ROOT_DIR/scripts/process_linktargets.py" \
 		--LINKTARGETS_TRIM_FILENAME "$LINKTARGETS_TRIM_FILENAME" \
-		--PURGED_PAGES_PKL_FILENAME "$PURGED_PAGES_PKL_FILENAME" \
+		--PAGES_BY_IDS_PKL_FILENAME "$PAGES_BY_IDS_PKL_FILENAME" \
 		--LINKTARGETS_PKL_FILENAME "$LINKTARGETS_PKL_FILENAME" \
 		--total_lines "$total_lines"
 	mv "$LINKTARGETS_PKL_FILENAME".tmp "$LINKTARGETS_PKL_FILENAME"
@@ -420,7 +410,7 @@ if [[ ! -f "$PAGELINKS_IDS_FILENAME" ]]; then
 	total_lines=$(pigz -dc "$PAGELINKS_TRIM_FILENAME" | sed -n '$=')
 	python3 "$ROOT_DIR/scripts/process_pagelinks.py" \
 		--PAGELINKS_TRIM_FILENAME "$PAGELINKS_TRIM_FILENAME" \
-		--PURGED_PAGES_PKL_FILENAME "$PURGED_PAGES_PKL_FILENAME" \
+		--PAGES_BY_IDS_PKL_FILENAME "$PAGES_BY_IDS_PKL_FILENAME" \
 		--LINKTARGETS_PKL_FILENAME "$LINKTARGETS_PKL_FILENAME" \
 		--total_lines "$total_lines" |
 		pigz --fast >"$PAGELINKS_IDS_FILENAME".tmp
@@ -483,7 +473,7 @@ if [[ ! -f "$CATEGORYLINKS_PURGED_FILENAME" ]]; then
 		--CATEGORYLINKS_TRIM_FILENAME "$CATEGORYLINKS_TRIM_FILENAME" \
 		--HIDDEN_PAGECATEGORIES_BY_TITLES_PKL_FILENAME "$HIDDEN_PAGECATEGORIES_BY_TITLES_PKL_FILENAME" \
 		--CATEGORIES_BY_TITLES_PKL_FILENAME "$CATEGORIES_BY_TITLES_PKL_FILENAME" \
-		--PURGED_PAGES_PKL_FILENAME "$PURGED_PAGES_PKL_FILENAME" \
+		--PAGES_BY_IDS_PKL_FILENAME "$PAGES_BY_IDS_PKL_FILENAME" \
 		--total_lines "$total_lines" |
 		pigz --fast >"$CATEGORYLINKS_PURGED_FILENAME".tmp
 	mv "$CATEGORYLINKS_PURGED_FILENAME".tmp "$CATEGORYLINKS_PURGED_FILENAME"
@@ -507,7 +497,7 @@ PAGES_FINAL_FILENAME="pages.final.tsv.gz"
 
 if [[ ! -f "$PAGES_FINAL_FILENAME" ]]; then
 	echo "[INFO] PAGES: sorting final tsv by page_id"
-	pigz -dc "$PURGED_PAGES_FILENAME" |
+	pigz -dc "$PAGES_FILENAME" |
 		sort --parallel=$PARALLEL_CORES -S 80% -t $'\t' -k1,1 |
 		pigz --best >"$PAGES_FINAL_FILENAME".tmp
 	mv "$PAGES_FINAL_FILENAME".tmp "$PAGES_FINAL_FILENAME"

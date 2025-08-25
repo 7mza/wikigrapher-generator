@@ -79,31 +79,38 @@ RETURN COLLECT(DISTINCT categories)
 ## orphan nodes (long running procedure)
 
 ```sql
-CALL
-  apoc.periodic.iterate(
-    "MATCH (node:page)
-    WHERE NOT EXISTS((node)-[:link_to]->())
-    AND NOT EXISTS((node)<-[:link_to|redirect_to]-())
-    RETURN node
-    UNION
-    MATCH (node:redirect)
-    WHERE NOT EXISTS((node)-[:redirect_to]->())
-    AND NOT EXISTS((node)<-[:link_to|redirect_to]-())
-    RETURN node",
-    "CREATE (orphan:orphan {id: node.pageId, title: node.title, type: labels(node)[0], createdAt: timestamp()})
-    WITH orphan, node
-    CALL apoc.log.info('orphan\\tid:%s\\ttitle:%s\\ttype:%s', [orphan.id, orphan.title, orphan.type])
-    RETURN orphan",
-    {batchSize: 10000, parallel: true}
+CALL apoc.periodic.iterate(
+  "MATCH (node:page|redirect) RETURN node",
+  "WITH node
+  WHERE NOT EXISTS((node)-[:link_to|redirect_to]->())
+  AND NOT EXISTS((node)<-[:link_to|redirect_to]-())
+  CREATE (orphan:orphan {
+    id: node.pageId,
+    title: node.title,
+    type: labels(node)[0],
+    createdAt: timestamp()
+  })
+  WITH orphan
+  CALL apoc.log.info(
+    apoc.text.format(
+      'orphan id: %s  title: %s type: %s', [orphan.id, orphan.title, orphan.type]
+    )
   )
-  YIELD batches, total
+  RETURN orphan",
+  {batchSize: 100000, parallel: true}
+)
+YIELD batches, total
 RETURN batches, total
 
 // wait for procedure to finish
 ```
 
 ```sql
-MATCH (orphan:orphan) RETURN orphan
+MATCH (orphan:orphan {type: "page"}) // or "redirect"
+RETURN orphan
+ORDER BY orphan.title
+SKIP 0
+LIMIT 10
 ```
 
 ## batch delete
@@ -111,9 +118,9 @@ MATCH (orphan:orphan) RETURN orphan
 ```sql
 CALL
   apoc.periodic.iterate(
-    "MATCH (node:orphan) RETURN node",
-    "DETACH DELETE node",
-    {batchSize: 10000, parallel: true}
+    "MATCH (orphan:orphan) RETURN orphan",
+    "DETACH DELETE orphan",
+    {batchSize: 100000, parallel: true}
   )
   YIELD batches, total
 RETURN batches, total

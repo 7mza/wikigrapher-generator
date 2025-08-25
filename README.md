@@ -2,6 +2,10 @@
 
 transform wikipedia into a knowledge graph [https://wikigrapher.com](https://wikigrapher.com)
 
+**TLDR: wikipedia sql dumps -> wikigrapher-generator -> wikipedia graph (neo4j)**
+
+---
+
 explore how wikipedia pages are connected beneath the surface :
 
 - 🔗 visualize connections between articles using a graph-based model
@@ -37,7 +41,7 @@ it's heavily modified to rely entirely on graph model and [neo4j/apoc](https://g
 bash
 
 ```shell
-#apt install wget aria2 pigz recode
+#apt install wget aria2 pigz
 
 chmod +x ./*.sh
 
@@ -61,12 +65,12 @@ pip3 install --upgrade pip -r requirements.txt
 
 **--lang XX** represents desired language of dump
 
-- **EN/FR/AR are tested**
+- **EN/AR/FR are tested**
 - if not provided, will default to EN
 
-to test an other language, enable it in line `en | fr | ar)` in [generate_tsv.sh](./generate_tsv.sh)
+to test an other language, enable it in line `en | ar | fr)` in [generate_tsv.sh](./generate_tsv.sh)
 
-**dump download depends on wikimedia servers rate limit and tsv generation takes around 2h on a 6c/32g/nvme**
+**dump download depends on wikimedia servers rate limit and graph generation for wikipedia EN takes around 2h on a 6c/32g/nvme**
 
 ## docker generation
 
@@ -145,6 +149,15 @@ CREATE TEXT INDEX index_meta_value IF NOT EXISTS FOR (n:meta) on (n.value);
 CREATE TEXT INDEX index_meta_id IF NOT EXISTS FOR (n:meta) on (n.metaId);
 ```
 
+and [after processing orphans](./NEO4J.md)
+
+```sql
+CREATE TEXT INDEX index_orphan_title IF NOT EXISTS FOR (n:orphan) on (n.title);
+CREATE TEXT INDEX index_orphan_type IF NOT EXISTS FOR (n:orphan) on (n.type);
+CREATE TEXT INDEX index_orphan_id IF NOT EXISTS FOR (n:orphan) on (n.id);
+CREATE TEXT INDEX index_orphan_created IF NOT EXISTS FOR (n:orphan) on (n.createdAt);
+```
+
 ```sql
 SHOW INDEXES;
 ```
@@ -183,7 +196,7 @@ format/lint:
 
 pip3 install --upgrade pip -r requirements_dev.txt
 
-isort ./scripts/*.py && black ./scripts/*.py && shfmt -l -w . && shellcheck ./*.sh
+isort ./scripts/*.py && black ./scripts/*.py && shfmt -l -w ./*.sh && shellcheck ./*.sh
 
 pylint ./scripts/*.py
 ```

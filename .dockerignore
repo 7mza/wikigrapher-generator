@@ -1,2 +1,6 @@
 dump/**
+misc/**
+!misc/example.sql
 output/**
+venv/**
+**/__pycache__/**
