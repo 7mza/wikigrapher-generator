@@ -1,0 +1,7 @@
+# wikigrapher-generator
+
+## version 0.0.1 - 2025-08-25
+
+- nodes: page, redirect, category, orphan
+- relations: link_to, redirect_to, contains
+- languages: EN, AR, FR

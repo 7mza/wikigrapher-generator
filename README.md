@@ -4,8 +4,6 @@ transform wikipedia into a knowledge graph [https://wikigrapher.com](https://wik
 
 **TLDR: wikipedia sql dumps -> wikigrapher-generator -> wikipedia graph (neo4j)**
 
----
-
 explore how wikipedia pages are connected beneath the surface :
 
 - 🔗 visualize connections between articles using a graph-based model
@@ -13,6 +11,8 @@ explore how wikipedia pages are connected beneath the surface :
 - 🕵️‍♂️ identify orphaned pages and hidden content gaps
 - 🔄 track redirects & category relationships
 - 📈 uncover unique data patterns & SEO opportunities
+
+---
 
 **standalone web app for this project is available at [7mza/wikigrapher-slim](https://github.com/7mza/wikigrapher-slim)**
 
