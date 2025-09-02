@@ -149,6 +149,11 @@ CREATE TEXT INDEX index_meta_value IF NOT EXISTS FOR (n:meta) on (n.value);
 CREATE TEXT INDEX index_meta_id IF NOT EXISTS FOR (n:meta) on (n.metaId);
 ```
 
+```sql
+SHOW INDEXES;
+// wait for 100% populationPercent
+```
+
 and [after processing orphans](./NEO4J.md)
 
 ```sql
@@ -160,9 +165,8 @@ CREATE TEXT INDEX index_orphan_created IF NOT EXISTS FOR (n:orphan) on (n.create
 
 ```sql
 SHOW INDEXES;
+// wait for 100% populationPercent
 ```
-
-wait for 100% populationPercent
 
 ### [queries to start testing](./NEO4J.md)
 
