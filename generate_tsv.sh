@@ -152,7 +152,7 @@ if [[ ! -f $REDIRECTS_TRIM_FILENAME ]]; then
 		sed -e "s/),(/\\n/g" |
 		grep -E "^[0-9]+,0," |
 		sed -e "s/,0,'/\\t/" |
-		sed -e "s/',.*$//" | # FIXME: 'zebi',zebi'
+		sed -E "s/','('[^']*').*$//" |
 		pigz --fast >"$REDIRECTS_TRIM_FILENAME".tmp
 	mv "$REDIRECTS_TRIM_FILENAME".tmp "$REDIRECTS_TRIM_FILENAME"
 else
@@ -168,7 +168,7 @@ if [[ ! -f "$PAGES_TRIM_FILENAME" ]]; then
 		sed -e "s/),(/\\n/g" |
 		grep -E "^[0-9]+,0," |
 		sed -e "s/,0,'/\\t/" |
-		sed -e "s/',\([01]\),.*$/\t\1/" | # FIXME: 'zebi',zebi'
+		sed -e "s/',\([01]\),.*$/\t\1/" |
 		pigz --fast >"$PAGES_TRIM_FILENAME".tmp
 	mv "$PAGES_TRIM_FILENAME".tmp "$PAGES_TRIM_FILENAME"
 else
