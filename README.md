@@ -1,40 +1,40 @@
-# <img src="./misc/wikigrapher.png" alt="drawing" width="50"/> wikigrapher-generator
+# <img src="./misc/wikigrapher.png" alt="drawing" width="50"/> Wikigrapher-Generator
 
-transform wikipedia into a knowledge graph [https://wikigrapher.com](https://wikigrapher.com)
+Transform Wikipedia into a knowledge graph [https://wikigrapher.com](https://wikigrapher.com)
 
-**TLDR: wikipedia sql dumps -> wikigrapher-generator -> wikipedia graph (neo4j)**
+**TLDR: Wikipedia SQL dumps -> Wikigrapher-Generator -> Wikipedia Neo4j graph**
 
-explore how wikipedia pages are connected beneath the surface :
+Explore how Wikipedia pages are connected beneath the surface :
 
-- 🔗 visualize connections between articles using a graph-based model
-- 🧭 discover degrees of separation and shortest paths between topics
-- 🕵️‍♂️ identify orphaned pages and hidden content gaps
-- 🔄 track redirects & category relationships
-- 📈 uncover unique data patterns & SEO opportunities
+- 🔗 Visualize connections between articles using a graph-based model
+- 🧭 Discover degrees of separation and shortest paths between topics
+- 🕵️‍♂️ Identify orphaned pages and hidden content gaps
+- 🔄 Track redirects & category relationships
+- 📈 Uncover unique data patterns & SEO opportunities
 
 ---
 
-**standalone web app for this project is available at [7mza/wikigrapher-slim](https://github.com/7mza/wikigrapher-slim)**
+**Standalone web app for this project is available at [7mza/wikigrapher-slim](https://github.com/7mza/wikigrapher-slim)**
 
-## overview
+## Overview
 
-built by transforming wikipedia sql dumps (pages, links, redirects, templates, categories) from [relational model](https://www.mediawiki.org/wiki/manual:database_layout)
+Built by transforming Wikipedia SQL dumps (pages, links, redirects, templates, categories) from [relational model](https://www.mediawiki.org/wiki/manual:database_layout)
 
-![sql_db](./misc/db.jpg)
+![sql_db](./misc/db.svg)
 
 into a navigable graph
 
 ![graph_db](./misc/graph.jpg)
 
-technically a set of bash scripts to download and clean dumps + python scripts to handle dictionary/set operations and serialize in-memory objects (RAM offloading + snapshotting of processing steps)
+Technically a set of bash scripts to download and clean dumps + python scripts to handle dictionary/set operations and serialize in-memory objects (RAM offloading + snapshotting of processing steps)
 
 ---
 
-this project is loosely based on [jwngr/sdow](https://github.com/jwngr/sdow)
+This project is loosely based on [jwngr/sdow](https://github.com/jwngr/sdow)
 
-it's heavily modified to rely entirely on graph model and [neo4j/apoc](https://github.com/neo4j/apoc) instead of rewriting graph algorithms + introducing support for more wikipedia node types (redirects, categories, templates ...)
+It's heavily modified to rely entirely on graph model and [neo4j/apoc](https://github.com/neo4j/apoc) instead of rewriting graph algorithms + introducing support for more Wikipedia node types (redirects, categories, templates ...)
 
-## local generation
+## Local generation
 
 [python <= 3.11](https://github.com/pyenv/pyenv)
 
@@ -56,25 +56,25 @@ pip3 install --upgrade pip -r requirements.txt
 ./clean.sh && ./generate_tsv.sh --date YYYYMMDD --lang XX
 ```
 
-**dumps are released each 01 & 20 of the month, 404/checksum error means dump in progress, wait for a few days or pick a previous date**
+**Dumps are released each 01 & 20 of the month, 404/checksum error means dump in progress, wait for a few days or pick a previous date**
 
 **--date YYYYMMDD** represents desired date of [dump](https://dumps.wikimedia.org/enwiki)
 
-- if not provided, will default to latest dump available
+- If not provided, will default to latest dump available
 - **--date 11111111 will generate an EN dummy dump based on [example.sql](./misc/example.sql) for testing purposes**
 
 **--lang XX** represents desired language of dump
 
 - **EN/AR/FR are tested**
-- if not provided, will default to EN
+- If not provided, will default to EN
 
-to test an other language, enable it in line `en | ar | fr)` in [generate_tsv.sh](./generate_tsv.sh)
+To test an other language, enable it in line `en | ar | fr)` in [generate_tsv.sh](./generate_tsv.sh)
 
-**dump download depends on wikimedia servers rate limit and graph generation for wikipedia EN takes around 2h on a 6c/32g/nvme**
+**Dump download depends on Wikimedia servers rate limit and graph generation for Wikipedia EN takes around 2h on a 6c/32g/nvme**
 
-## docker generation
+## Docker generation
 
-<span style="color:red">limit generator service RAM and CPU in [compose.yml](./compose.yml)</span>
+<span style="color:red">Limit generator service RAM and CPU in [compose.yml](./compose.yml)</span>
 
 ```shell
 docker compose run --remove-orphans --build generator
@@ -92,25 +92,31 @@ DUMP_DATE=YYYYMMDD DUMP_LANG=XX docker compose run --remove-orphans --build gene
 sudo chown -R "$(id -u):$(id -g)" ./dump/ ./output/
 ```
 
-## neo4j setup
+## Neo4j setup
 
-after successful generation of graph TSVs by previous step
+Clean previous neo4j volume when processing a newer dump
+
+```shell
+docker volume rm wikigrapher_neo4j_data
+```
+
+After successful generation of graph TSVs by previous step
 
 `[INFO] graph generated successfully: Sun Aug 01 08:00:00 2025`
 
 (exit 0 + check [output folder](./output/))
 
-uncomment neo4j service command line in [compose.yml](./compose.yml) to prevent default db from starting immediately after neo4j server starts
+Uncomment neo4j service command line in [compose.yml](./compose.yml) to prevent default db from starting immediately after neo4j server starts
 
-community version only allows 1 db and prevents importing on a running one
+Community version only allows 1 db and prevents importing on a running one
 
-then
+Then
 
 ```shell
 docker compose --profile neo4j up --build --remove-orphans
 ```
 
-after container starts and return "not starting database automatically", leave it running, and in a separate terminal (project dir)
+After container starts and return "not starting database automatically", leave it running, and in a separate terminal (project dir)
 
 ```shell
 docker compose exec neo4j bash -c "
@@ -128,11 +134,11 @@ neo4j-admin database import full neo4j \
 --verbose"
 ```
 
-after importing is finished, revert changes of [compose.yml](./compose.yml), stop the previously running neo4j container then `docker compose --profile neo4j up --build --remove-orphans` again, you should be able to connect to neo4j ui at http://localhost:7474/ (login/pwd in [.env](./.env))
+After importing is finished, revert changes of [compose.yml](./compose.yml), stop the previously running neo4j container then `docker compose --profile neo4j up --build --remove-orphans` again, you should be able to connect to neo4j ui at http://localhost:7474/ (login/pwd in [.env](./.env))
 
-### neo4j text lookup indexes :
+### Neo4j text lookup indexes :
 
-necessary for perf
+Necessary for perf
 
 ```sql
 CREATE TEXT INDEX index_page_title IF NOT EXISTS FOR (n:page) on (n.title);
@@ -154,7 +160,7 @@ SHOW INDEXES;
 // wait for 100% populationPercent
 ```
 
-and [after processing orphans](./NEO4J.md)
+And [after processing orphans](./NEO4J.md)
 
 ```sql
 CREATE TEXT INDEX index_orphan_title IF NOT EXISTS FOR (n:orphan) on (n.title);
@@ -168,30 +174,30 @@ SHOW INDEXES;
 // wait for 100% populationPercent
 ```
 
-### [queries to start testing](./NEO4J.md)
+### [Queries to start testing](./NEO4J.md)
 
-## collaboration & scope
+## Collaboration & scope
 
-there’s more structured wikipedia data to be added (revisions, revision authors, ...etc)
+There’s more structured Wikipedia data to be added (revisions, revision authors, ...etc)
 
-other tools like spark are better for large-scale processing, but the goal here is simplicity:
+Other tools like spark are better for large-scale processing, but the goal here is simplicity:
 runs on a personal machine, easy to understand and easy to extend
 
-if you have ideas or want to contribute, feel free to open an issue or PR
+If you have ideas or want to contribute, feel free to open an issue or PR
 
-## todo
+## Todo
 
-- wikipedia templates
-- split sh files
-- unit tests
-- lower RAM needs by moving from dill/pickle to a better way (mmap, hdf5 ...)
-- pgzip not working on py >= 3.12 (dumps are gz and neo4j-admin can only read gz/zip)
+- Wikipedia templates
+- Split sh files
+- Unit tests
+- Lower RAM needs by moving from dill/pickle to a better way (mmap, hdf5 ...)
+- Pgzip not working on py >= 3.12 (dumps are gz and neo4j-admin can only read gz/zip)
 
-## misc
+## Misc
 
-all links DB are changing according to [https://phabricator.wikimedia.org/T300222](https://phabricator.wikimedia.org/T300222)
+All links DB are changing according to [https://phabricator.wikimedia.org/T300222](https://phabricator.wikimedia.org/T300222)
 
-format/lint:
+Format/lint:
 
 ```shell
 #apt install shfmt shellcheck
@@ -205,10 +211,10 @@ isort ./scripts/*.py && black ./scripts/*.py && shfmt -l -w ./*.sh && shellcheck
 pylint ./scripts/*.py
 ```
 
-## license
+## License
 
-this project is licensed under the [GNU Affero General Public License v3.0](./LICENSE.txt)
+This project is licensed under the [GNU Affero General Public License v3.0](./LICENSE.txt)
 
-wikipedia® is a registered trademark of the wikimedia foundation
+Wikipedia® is a registered trademark of the Wikimedia foundation
 
-this project is independently developed and not affiliated with or endorsed by the wikimedia foundation
+This project is independently developed and not affiliated with or endorsed by the Wikimedia foundation

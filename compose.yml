@@ -14,7 +14,7 @@ services:
       - generator
 
   neo4j:
-    image: neo4j:2025-community
+    image: neo4j:community
     mem_limit: 8g
     # cpus: 10 #threads
     restart: unless-stopped

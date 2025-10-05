@@ -32,7 +32,7 @@ CREATE TABLE `category` (
   PRIMARY KEY (`cat_id`),
   UNIQUE KEY `cat_title` (`cat_title`),
   KEY `cat_pages` (`cat_pages`)
-) ENGINE=InnoDB AUTO_INCREMENT=250036624 DEFAULT CHARSET=binary ROW_FORMAT=COMPRESSED;
+) ENGINE=InnoDB AUTO_INCREMENT=250129430 DEFAULT CHARSET=binary ROW_FORMAT=COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -68,18 +68,15 @@ DROP TABLE IF EXISTS `categorylinks`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `categorylinks` (
   `cl_from` int(8) unsigned NOT NULL DEFAULT 0,
-  `cl_to` varbinary(255) NOT NULL DEFAULT '',
   `cl_sortkey` varbinary(230) NOT NULL DEFAULT '',
   `cl_timestamp` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `cl_sortkey_prefix` varbinary(255) NOT NULL DEFAULT '',
-  `cl_collation` varbinary(32) NOT NULL DEFAULT '',
   `cl_type` enum('page','subcat','file') NOT NULL DEFAULT 'page',
   `cl_collation_id` smallint(5) unsigned NOT NULL DEFAULT 0,
-  `cl_target_id` bigint(20) unsigned DEFAULT NULL,
-  PRIMARY KEY (`cl_from`,`cl_to`),
-  KEY `cl_timestamp` (`cl_to`,`cl_timestamp`),
-  KEY `cl_sortkey` (`cl_to`,`cl_type`,`cl_sortkey`,`cl_from`),
-  KEY `cl_sortkey_id` (`cl_target_id`,`cl_type`,`cl_sortkey`,`cl_from`)
+  `cl_target_id` bigint(20) unsigned NOT NULL,
+  PRIMARY KEY (`cl_from`,`cl_target_id`),
+  KEY `cl_sortkey_id` (`cl_target_id`,`cl_type`,`cl_sortkey`,`cl_from`),
+  KEY `cl_timestamp_id` (`cl_target_id`,`cl_timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=binary ROW_FORMAT=COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -120,7 +117,7 @@ CREATE TABLE `linktarget` (
   `lt_title` varbinary(255) NOT NULL,
   PRIMARY KEY (`lt_id`),
   UNIQUE KEY `lt_namespace_title` (`lt_namespace`,`lt_title`)
-) ENGINE=InnoDB AUTO_INCREMENT=111556660 DEFAULT CHARSET=binary;
+) ENGINE=InnoDB AUTO_INCREMENT=113470593 DEFAULT CHARSET=binary;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -172,7 +169,7 @@ CREATE TABLE `page` (
   KEY `page_random` (`page_random`),
   KEY `page_len` (`page_len`),
   KEY `page_redirect_namespace_len` (`page_is_redirect`,`page_namespace`,`page_len`)
-) ENGINE=InnoDB AUTO_INCREMENT=80493988 DEFAULT CHARSET=binary ROW_FORMAT=COMPRESSED;
+) ENGINE=InnoDB AUTO_INCREMENT=81248596 DEFAULT CHARSET=binary ROW_FORMAT=COMPRESSED;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -305,44 +302,3 @@ CREATE TABLE `redirect` (
 --
 
 /*!40000 ALTER TABLE `redirect` DISABLE KEYS */;
-
-/*M!999999\- enable the sandbox mode */ 
--- MariaDB dump 10.19  Distrib 10.5.29-MariaDB, for debian-linux-gnu (x86_64)
---
--- Host: dbstore1008.eqiad.wmnet    Database: enwiki
--- ------------------------------------------------------
--- Server version	10.11.13-MariaDB-log
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `templatelinks`
---
-
-DROP TABLE IF EXISTS `templatelinks`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `templatelinks` (
-  `tl_from` int(8) unsigned NOT NULL DEFAULT 0,
-  `tl_from_namespace` int(11) NOT NULL DEFAULT 0,
-  `tl_target_id` bigint(20) unsigned NOT NULL,
-  PRIMARY KEY (`tl_from`,`tl_target_id`),
-  KEY `tl_target_id` (`tl_target_id`,`tl_from`),
-  KEY `tl_backlinks_namespace_target_id` (`tl_from_namespace`,`tl_target_id`,`tl_from`)
-) ENGINE=InnoDB DEFAULT CHARSET=binary ROW_FORMAT=COMPRESSED;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `templatelinks`
---
-
-/*!40000 ALTER TABLE `templatelinks` DISABLE KEYS */;

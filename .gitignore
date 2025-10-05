@@ -3,8 +3,23 @@ dump/**
 output/**
 !output/.gitkeep
 
-# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,python
-# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,linux,python
+# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,git,linux,python
+# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,git,linux,python
+
+### Git ###
+# Created by git for backups. To disable backups in Git:
+# $ git config --global mergetool.keepBackup false
+*.orig
+
+# Created by git when using merge tools for conflicts
+*.BACKUP.*
+*.BASE.*
+*.LOCAL.*
+*.REMOTE.*
+*_BACKUP_*.txt
+*_BASE_*.txt
+*_LOCAL_*.txt
+*_REMOTE_*.txt
 
 ### Linux ###
 *~
@@ -144,7 +159,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-#.env
+.env
 .venv
 env/
 venv/
@@ -212,5 +227,4 @@ pyrightconfig.json
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,python
-
+# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,git,linux,python

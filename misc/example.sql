@@ -116,7 +116,10 @@ INSERT INTO `linktarget` VALUES
 (15,0,'the grey wizard'),
 (16,0,'the bright lord'),
 (17,0,'the bright lord'),
-(18,0,'test_redirect');
+(18,0,'test_redirect'),
+(19,14,'wizards'),
+(20,14,'gods'),
+(21,14,'aspects');
 --LINKTARGETS##
 
 --##REDIRECTS
@@ -161,7 +164,7 @@ INSERT INTO `page_props` VALUES
 (21,'prop_name1','prop_value1',NULL),
 (22,'prop_name2','prop_value2',NULL),
 (23,'hiddencat','',NULL),
-(24,'hiddencat','',NULL),
+(24,'hiddencat','',NULL);
 --PAGEPROPS##
 
 --##CATEGORIES
@@ -173,16 +176,16 @@ INSERT INTO `category` VALUES
 
 --##CATEGORYLINKS
 INSERT INTO `categorylinks` VALUES
-(1,'wizards',NULL,NULL,NULL,NULL,NULL),
-(2,'wizards',NULL,NULL,NULL,NULL,NULL),
-(3,'wizards',NULL,NULL,NULL,NULL,NULL),
-(4,'wizards',NULL,NULL,NULL,NULL,NULL),
-(5,'wizards',NULL,NULL,NULL,NULL,NULL),
-(6,'gods',NULL,NULL,NULL,NULL,NULL),
-(7,'gods',NULL,NULL,NULL,NULL,NULL),
-(8,'gods',NULL,NULL,NULL,NULL,NULL),
-(10,'gods',NULL,NULL,NULL,NULL,NULL),
-(12,'aspects',NULL,NULL,NULL,NULL,NULL),
-(13,'aspects',NULL,NULL,NULL,NULL,NULL),
-(16,'aspects',NULL,NULL,NULL,NULL,NULL);
+(1,NULL,NULL,NULL,NULL,NULL,19),
+(2,NULL,NULL,NULL,NULL,NULL,19),
+(3,NULL,NULL,NULL,NULL,NULL,19),
+(4,NULL,NULL,NULL,NULL,NULL,19),
+(5,NULL,NULL,NULL,NULL,NULL,19),
+(6,NULL,NULL,NULL,NULL,NULL,20),
+(7,NULL,NULL,NULL,NULL,NULL,20),
+(8,NULL,NULL,NULL,NULL,NULL,20),
+(10,NULL,NULL,NULL,NULL,NULL,20),
+(12,NULL,NULL,NULL,NULL,NULL,21),
+(13,NULL,NULL,NULL,NULL,NULL,21),
+(16,NULL,NULL,NULL,NULL,NULL,21);
 --CATEGORYLINKS##

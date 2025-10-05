@@ -221,6 +221,7 @@ if [[ ! -f "$PAGEPROPS_TRIM_FILENAME" ]]; then
 else
 	echo "[WARN] PAGEPROPS: already extracted hiddencats"
 fi
+
 CATEGORIES_TRIM_FILENAME="categories_trim.tsv.gz"
 
 if [[ ! -f "$CATEGORIES_TRIM_FILENAME" ]]; then
@@ -267,8 +268,9 @@ if [[ ! -f "$CATEGORYLINKS_TRIM_FILENAME" ]]; then
 	pigz -dc "$CATEGORYLINKS_SANITIZED_FILENAME" |
 		sed -n "s/^INSERT INTO \`categorylinks\` VALUES (//p" |
 		sed -e "s/),(/\\n/g" |
-		sed -e "s/,'/\\t/" |
-		sed -e "s/',.*$//" | # FIXME: 'zebi',zebi'
+		sed -e "s/,/\\t/g" |
+		sed -e "s/);//g" |
+		awk -F'\t' '{print $1"\t"$NF}' |
 		pigz --fast >"$CATEGORYLINKS_TRIM_FILENAME".tmp
 	mv "$CATEGORYLINKS_TRIM_FILENAME".tmp "$CATEGORYLINKS_TRIM_FILENAME"
 else
@@ -306,6 +308,25 @@ if [[ ! -f "$LINKTARGETS_TRIM_FILENAME" ]]; then
 	mv "$LINKTARGETS_TRIM_FILENAME".tmp "$LINKTARGETS_TRIM_FILENAME"
 else
 	echo "[WARN] LINKTARGETS: already trimmed file"
+fi
+
+# FIXME: combine with previous in one pass
+
+CATEGORYLINKTARGETS_TRIM_FILENAME="categorylinktargets_trim.tsv.gz"
+
+if [[ ! -f "$CATEGORYLINKTARGETS_TRIM_FILENAME" ]]; then
+	echo "[INFO] CATEGORYLINKTARGETS: trimming file"
+	pigz -dc "$LINKTARGETS_DUMP_FILENAME" |
+		sed -n "s/^INSERT INTO \`linktarget\` VALUES (//p" |
+		sed -e "s/),(/\\n/g" |
+		grep -E "^[0-9]+,14," |
+		sed -e "s/,14,'/\\t/" |
+		sed -e "s/'$//" | # FIXME: 'zebi',zebi'
+		sed -e "s/');$//" |
+		pigz --fast >"$CATEGORYLINKTARGETS_TRIM_FILENAME".tmp
+	mv "$CATEGORYLINKTARGETS_TRIM_FILENAME".tmp "$CATEGORYLINKTARGETS_TRIM_FILENAME"
+else
+	echo "[WARN] CATEGORYLINKTARGETS: already trimmed file"
 fi
 
 CATEGORIES_BY_TITLES_PKL_FILENAME="CATEGORIES_BY_TITLES.pkl.gz"
@@ -395,7 +416,7 @@ if [[ ! -f "$LINKTARGETS_PKL_FILENAME" ]]; then
 	total_lines=$(pigz -dc "$LINKTARGETS_TRIM_FILENAME" | sed -n '$=')
 	python3 "$ROOT_DIR/scripts/process_linktargets.py" \
 		--LINKTARGETS_TRIM_FILENAME "$LINKTARGETS_TRIM_FILENAME" \
-		--PAGES_BY_IDS_PKL_FILENAME "$PAGES_BY_IDS_PKL_FILENAME" \
+		--PAGES_BY_TITLES_PKL_FILENAME "$PAGES_BY_TITLES_PKL_FILENAME" \
 		--LINKTARGETS_PKL_FILENAME "$LINKTARGETS_PKL_FILENAME" \
 		--total_lines "$total_lines"
 	mv "$LINKTARGETS_PKL_FILENAME".tmp "$LINKTARGETS_PKL_FILENAME"
@@ -464,21 +485,36 @@ else
 	echo "[WARN] PAGECATEGORIES: already purged hidden pagecategories & generated pickle"
 fi
 
+CATEGORYLINKTARGETS_PKL_FILENAME="CATEGORYLINKTARGETS.pkl.gz"
+
+if [[ ! -f "$CATEGORYLINKTARGETS_PKL_FILENAME" ]]; then
+	echo "[INFO] CATEGORYLINKTARGETS: purging categorylinktargets & generating pickle"
+	total_lines=$(pigz -dc "$CATEGORYLINKTARGETS_TRIM_FILENAME" | sed -n '$=')
+	python3 "$ROOT_DIR/scripts/process_categorylinktargets.py" \
+		--CATEGORYLINKTARGETS_TRIM_FILENAME "$CATEGORYLINKTARGETS_TRIM_FILENAME" \
+		--CATEGORIES_BY_TITLES_PKL_FILENAME "$CATEGORIES_BY_TITLES_PKL_FILENAME" \
+		--CATEGORYLINKTARGETS_PKL_FILENAME "$CATEGORYLINKTARGETS_PKL_FILENAME" \
+		--HIDDEN_PAGECATEGORIES_BY_TITLES_PKL_FILENAME "$HIDDEN_PAGECATEGORIES_BY_TITLES_PKL_FILENAME" \
+		--total_lines "$total_lines"
+	mv "$CATEGORYLINKTARGETS_PKL_FILENAME".tmp "$CATEGORYLINKTARGETS_PKL_FILENAME"
+else
+	echo "[WARN] CATEGORYLINKTARGETS: already purged categorylinktargets & generated pickle"
+fi
+
 CATEGORYLINKS_PURGED_FILENAME="categorylinks_purged.tsv.gz"
 
 if [[ ! -f "$CATEGORYLINKS_PURGED_FILENAME" ]]; then
-	echo "[INFO] CATEGORYLINKS: purging hidden categorylinks & replacing category_title by category_id"
+	echo "[INFO] CATEGORYLINKS: replacing categorylink_id by category_id"
 	total_lines=$(pigz -dc "$CATEGORYLINKS_TRIM_FILENAME" | sed -n '$=')
 	python3 "$ROOT_DIR/scripts/process_categorylinks.py" \
 		--CATEGORYLINKS_TRIM_FILENAME "$CATEGORYLINKS_TRIM_FILENAME" \
-		--HIDDEN_PAGECATEGORIES_BY_TITLES_PKL_FILENAME "$HIDDEN_PAGECATEGORIES_BY_TITLES_PKL_FILENAME" \
-		--CATEGORIES_BY_TITLES_PKL_FILENAME "$CATEGORIES_BY_TITLES_PKL_FILENAME" \
+		--CATEGORYLINKTARGETS_PKL_FILENAME "$CATEGORYLINKTARGETS_PKL_FILENAME" \
 		--PAGES_BY_IDS_PKL_FILENAME "$PAGES_BY_IDS_PKL_FILENAME" \
 		--total_lines "$total_lines" |
 		pigz --fast >"$CATEGORYLINKS_PURGED_FILENAME".tmp
 	mv "$CATEGORYLINKS_PURGED_FILENAME".tmp "$CATEGORYLINKS_PURGED_FILENAME"
 else
-	echo "[WARN] CATEGORYLINKS: already purged hidden categorylinks and category_title by category_id"
+	echo "[WARN] CATEGORYLINKS: already replaced categorylink_id by category_id"
 fi
 
 CATEGORYLINKS_FINAL_FILENAME="belong_to.final.tsv.gz"

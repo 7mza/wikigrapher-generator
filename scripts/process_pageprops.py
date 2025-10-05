@@ -22,7 +22,7 @@ def process_pageprops(
         ):
             try:
                 _id = line.rstrip("\n")
-                int(_id)  # detect if a line unparsable
+                int(_id)  # detect if a line is unparsable
                 pageprops.add(_id)
             except Exception:
                 logger.error("error parsing line:\n%s", line)
