@@ -1,8 +1,10 @@
 services:
   generator:
     build: .
-    mem_limit: 28g
-    # cpus: 10 #threads
+    deploy:
+      resources:
+        limits:
+          memory: 20g
     restart: no
     environment:
       - DUMP_DATE=$DUMP_DATE
@@ -15,8 +17,10 @@ services:
 
   neo4j:
     image: neo4j:community
-    mem_limit: 8g
-    # cpus: 10 #threads
+    deploy:
+      resources:
+        limits:
+          memory: 8g
     restart: unless-stopped
     ports:
       - 7474:7474

@@ -193,20 +193,19 @@ SHOW INDEXES;
 
 ## Some Neo4j queries
 
-### top/bottom N categories
+<span style="color:red">neo4j auto escapes special chars before saving</span>
 
-```sql
-MATCH (category:category)<-[:belong_to]-()
-WITH category, count(*) AS categoryCount
-RETURN category.title AS categoryTitle, categoryCount
-ORDER BY categoryCount DESC // or ASC for bottom
-SKIP 0 LIMIT 3 // carefull, will hang your host
 ```
+L'Avare_(film)            savedAs     L\\'Avare_(film)
+
+Powelliphanta_"Matiri"    savedAs     Powelliphanta_\\\"Matiri\\\"
+```
+
 
 ### shortest path between two nodes
 
 ```sql
-MATCH (source:page|redirect {title: "Gandalf"})
+MATCH (source:page|redirect {title: "Albus_Dumbledore"})
 MATCH (target:page|redirect {title: "Ubuntu"})
 MATCH path = SHORTESTPATH((source)-[:link_to|redirect_to*1..50]->(target))
 RETURN path
@@ -215,7 +214,7 @@ RETURN path
 ### all shortest paths between two nodes
 
 ```sql
-MATCH (source:page|redirect {title: "Gandalf"})
+MATCH (source:page|redirect {title: "L\\'Avare_(film)"})
 MATCH (target:page|redirect {title: "Ubuntu"})
 MATCH paths = ALLSHORTESTPATHS((source)-[:link_to|redirect_to*1..50]->(target))
 WITH paths, [node IN nodes(paths) | node.title] AS titles
@@ -227,28 +226,24 @@ return paths
 ### all shortest paths between two nodes + consider redirects as target
 
 ```sql
-WITH "Gandalf" AS source, "Ubuntu" AS target
-MATCH path = SHORTESTPATH(
-  (:page|redirect {title: source})-[:link_to|redirect_to*1..50]->(:page|redirect {title: target})
-)
-WITH source, target, length(path) AS len
+MATCH (source:page|redirect {title: "L\\'Avare_(film)"})
+MATCH (target:page|redirect {title: "Powelliphanta_\\\"Matiri\\\""})
+MATCH (redirects:redirect)-[:redirect_to]->(target)
+MATCH paths = allShortestPaths((source)-[:link_to|redirect_to*1..50]->(target))
+WITH paths AS tmp, length(paths) AS len, source, redirects
 CALL
   apoc.cypher.run(
-    "CALL (source, target, len) {
-        MATCH (s1:page|redirect {title: '" + source + "'})
-        MATCH (t1:page|redirect {title: '" + target + "'})
-        MATCH paths = ALLSHORTESTPATHS((s1)-[:link_to|redirect_to*1.." + len + "]->(t1))
+    "CALL (source, len, redirects, tmp) {
+        MATCH paths = ALLSHORTESTPATHS(
+          (source)-[:link_to|redirect_to*1.." + len + "]->(redirects)
+        )
         RETURN paths
         UNION
-        MATCH (s2:page|redirect {title: '" + source + "'})
-        MATCH (t2:page|redirect {title: '" + target + "'})
-        MATCH (redirects:redirect)-[:redirect_to]->(t2)
-        MATCH paths = ALLSHORTESTPATHS((s2)-[:link_to|redirect_to*1.." + len + "]->(redirects))
-        RETURN paths }
+        RETURN tmp as paths }
         WITH paths, [node IN nodes(paths) | node.title] AS titles
         ORDER BY titles
         RETURN paths",
-    {source: source, target: target, len: len}
+    {source: source, redirects: redirects, len: len, tmp:tmp}
   )
 YIELD value
 WITH DISTINCT value.paths AS paths
@@ -273,6 +268,16 @@ MATCH (node)-[:belong_to]->(target)
 RETURN node
 ORDER BY node.title
 // SKIP 0 LIMIT 10 // carefull, will hang your host
+```
+
+### top/bottom N categories
+
+```sql
+MATCH (category:category)<-[:belong_to]-()
+WITH category, count(*) AS categoryCount
+RETURN category.title AS categoryTitle, categoryCount
+ORDER BY categoryCount DESC // or ASC for bottom
+SKIP 0 LIMIT 3 // carefull, will hang your host
 ```
 
 ## Collaboration & scope
