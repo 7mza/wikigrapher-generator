@@ -4,13 +4,7 @@ Transform Wikipedia into a knowledge graph [https://wikigrapher.com](https://wik
 
 **TLDR: Wikipedia SQL dumps -> Wikigrapher-Generator -> Wikipedia Neo4j graph**
 
-Explore how Wikipedia pages are connected beneath the surface :
-
-- 🔗 Visualize connections between articles using a graph-based model
-- 🧭 Discover degrees of separation and shortest paths between topics
-- 🕵️‍♂️ Identify orphaned pages and hidden content gaps
-- 🔄 Track redirects & category relationships
-- 📈 Uncover unique data patterns & SEO opportunities
+Explore how Wikipedia pages are connected beneath the surface
 
 ---
 
@@ -137,7 +131,7 @@ After importing is finished, revert changes of [compose.yml](./compose.yml), sto
 
 ### Neo4j text lookup indexes :
 
-Necessary for perf
+Nodes indexes
 
 ```sql
 CREATE TEXT INDEX index_page_title IF NOT EXISTS FOR (n:page) on (n.title);
@@ -159,7 +153,31 @@ SHOW INDEXES;
 // wait for 100% populationPercent
 ```
 
-And [after processing orphans](./NEO4J.md)
+If you want to flag orphans (pages with no incoming or outgoing links)
+
+```sql
+CALL apoc.periodic.iterate(
+  "MATCH (node:page) RETURN node",
+  "WITH node
+  WHERE NOT EXISTS ((node)-[:link_to]->())
+  AND NOT EXISTS ((node)<-[:link_to|redirect_to]-())
+  AND NOT EXISTS ((node)<-[:contains]-(:category {title: 'Redirects_to_Wiktionary'}))
+  CREATE (orphan:orphan {
+    id: node.pageId,
+    title: node.title,
+    type: labels(node)[0],
+    createdAt: timestamp()
+  })
+  RETURN orphan",
+  {batchSize: 100000, parallel: true}
+)
+YIELD batches, total
+RETURN batches, total
+
+// wait for procedure to finish
+```
+
+then orphan indexes
 
 ```sql
 CREATE TEXT INDEX index_orphan_title IF NOT EXISTS FOR (n:orphan) on (n.title);
@@ -173,7 +191,89 @@ SHOW INDEXES;
 // wait for 100% populationPercent
 ```
 
-### [Queries to start testing](./NEO4J.md)
+## Some Neo4j queries
+
+### top/bottom N categories
+
+```sql
+MATCH (category:category)<-[:belong_to]-()
+WITH category, count(*) AS categoryCount
+RETURN category.title AS categoryTitle, categoryCount
+ORDER BY categoryCount DESC // or ASC for bottom
+SKIP 0 LIMIT 3 // carefull, will hang your host
+```
+
+### shortest path between two nodes
+
+```sql
+MATCH (source:page|redirect {title: "Gandalf"})
+MATCH (target:page|redirect {title: "Ubuntu"})
+MATCH path = SHORTESTPATH((source)-[:link_to|redirect_to*1..50]->(target))
+RETURN path
+```
+
+### all shortest paths between two nodes
+
+```sql
+MATCH (source:page|redirect {title: "Gandalf"})
+MATCH (target:page|redirect {title: "Ubuntu"})
+MATCH paths = ALLSHORTESTPATHS((source)-[:link_to|redirect_to*1..50]->(target))
+WITH paths, [node IN nodes(paths) | node.title] AS titles
+ORDER BY titles
+// SKIP 0 LIMIT 10
+return paths
+```
+
+### all shortest paths between two nodes + consider redirects as target
+
+```sql
+WITH "Gandalf" AS source, "Ubuntu" AS target
+MATCH path = SHORTESTPATH(
+  (:page|redirect {title: source})-[:link_to|redirect_to*1..50]->(:page|redirect {title: target})
+)
+WITH source, target, length(path) AS len
+CALL
+  apoc.cypher.run(
+    "CALL (source, target, len) {
+        MATCH (s1:page|redirect {title: '" + source + "'})
+        MATCH (t1:page|redirect {title: '" + target + "'})
+        MATCH paths = ALLSHORTESTPATHS((s1)-[:link_to|redirect_to*1.." + len + "]->(t1))
+        RETURN paths
+        UNION
+        MATCH (s2:page|redirect {title: '" + source + "'})
+        MATCH (t2:page|redirect {title: '" + target + "'})
+        MATCH (redirects:redirect)-[:redirect_to]->(t2)
+        MATCH paths = ALLSHORTESTPATHS((s2)-[:link_to|redirect_to*1.." + len + "]->(redirects))
+        RETURN paths }
+        WITH paths, [node IN nodes(paths) | node.title] AS titles
+        ORDER BY titles
+        RETURN paths",
+    {source: source, target: target, len: len}
+  )
+YIELD value
+WITH DISTINCT value.paths AS paths
+// SKIP 0 LIMIT 10
+RETURN paths
+```
+
+### find orphan nodes
+
+```sql
+MATCH (orphan:orphan {type: "page"}) // or "redirect"
+RETURN orphan
+ORDER BY orphan.title
+// SKIP 0 LIMIT 10
+```
+
+### all nodes belonging to a category
+
+```sql
+MATCH (target:category {title: "The_Lord_of_the_Rings_characters"})
+MATCH (node)-[:belong_to]->(target)
+RETURN node
+ORDER BY node.title
+// SKIP 0 LIMIT 10 // carefull, will hang your host
+```
 
 ## Collaboration & scope
 
