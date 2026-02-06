@@ -83,7 +83,7 @@ PAGES_BY_TITLES_PKL_FILENAME = args.PAGES_BY_TITLES_PKL_FILENAME
 TOTAL_LINES = args.total_lines
 
 logger.info("processing pages")
-(pages_by_ids, pages_by_titles) = process_pages(PAGES_TRIM_FILENAME, TOTAL_LINES)
+pages_by_ids, pages_by_titles = process_pages(PAGES_TRIM_FILENAME, TOTAL_LINES)
 
 logger.info("generating pages_by_ids pickle")
 path, size = serialize(pages_by_ids, PAGES_BY_IDS_PKL_FILENAME)

@@ -68,7 +68,7 @@ pip3 install --upgrade pip -r requirements.txt
 - **EN/AR/FR are tested**
 - If not provided, will default to EN
 
-To test an other language, enable it in line `en | ar | fr)` in [generate_tsv.sh](./generate_tsv.sh)
+To test another language, enable it in line `en | ar | fr)` in [generate_tsv.sh](./generate_tsv.sh)
 
 **Dump download depends on Wikimedia servers rate limit and graph generation for Wikipedia EN takes around 2h on a 6c/32g/nvme**
 
@@ -120,17 +120,16 @@ After container starts and return "not starting database automatically", leave i
 
 ```shell
 docker compose exec neo4j bash -c "
-cd /import &&
-\
+cd /import && \
 neo4j-admin database import full neo4j \
 --overwrite-destination --delimiter='\t' --array-delimiter=';' \
---nodes=pages.header.tsv.gz,pages.final.tsv.gz \
---nodes=categories.header.tsv.gz,categories.final.tsv.gz \
---nodes=meta.header.tsv.gz,meta.final.tsv.gz \
---relationships=redirect_to.header.tsv.gz,redirect_to.final.tsv.gz \
---relationships=link_to.header.tsv.gz,link_to.final.tsv.gz \
---relationships=belong_to.header.tsv.gz,belong_to.final.tsv.gz \
---relationships=contains.header.tsv.gz,contains.final.tsv.gz \
+--nodes=./pages.header.tsv.gz,./pages.final.tsv.gz \
+--nodes=./categories.header.tsv.gz,./categories.final.tsv.gz \
+--nodes=./meta.header.tsv.gz,./meta.final.tsv.gz \
+--relationships=./redirect_to.header.tsv.gz,./redirect_to.final.tsv.gz \
+--relationships=./link_to.header.tsv.gz,./link_to.final.tsv.gz \
+--relationships=./belong_to.header.tsv.gz,./belong_to.final.tsv.gz \
+--relationships=./contains.header.tsv.gz,./contains.final.tsv.gz \
 --verbose"
 ```
 
