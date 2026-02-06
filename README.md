@@ -228,13 +228,13 @@ return paths
 ```sql
 MATCH (source:page|redirect {title: "L\\'Avare_(film)"})
 MATCH (target:page|redirect {title: "Powelliphanta_\\\"Matiri\\\""})
-MATCH (redirects:redirect)-[:redirect_to]->(target)
+OPTIONAL MATCH (redirects:redirect)-[:redirect_to]->(target)
 MATCH paths = allShortestPaths((source)-[:link_to|redirect_to*1..50]->(target))
 WITH paths AS tmp, length(paths) AS len, source, redirects
 CALL
   apoc.cypher.run(
     "CALL (source, len, redirects, tmp) {
-        MATCH paths = ALLSHORTESTPATHS(
+        OPTIONAL MATCH paths = ALLSHORTESTPATHS(
           (source)-[:link_to|redirect_to*1.." + len + "]->(redirects)
         )
         RETURN paths
